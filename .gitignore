@@ -1,0 +1,11 @@
+# Dependencies and bundles
+dependencies/
+*.tar
+*.tar.gz
+*.zip
+
+# Environment files
+.env
+
+# Build artifacts
+build/

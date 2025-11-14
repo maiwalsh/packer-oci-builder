@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "WebFetch(domain:developer.hashicorp.com)",
+      "Bash(./collect-dependencies.sh)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:releases.hashicorp.com)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(tar:*)",
+      "Bash(docker build:*)",
+      "Bash(pip3 download:*)",
+      "Bash(docker run:*)",
+      "Bash(docker images:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
