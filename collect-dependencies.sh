@@ -9,7 +9,7 @@ ARCH="linux-amd64"
 
 echo "=== Packer Dependencies Collection Script ==="
 echo "Creating dependencies directory..."
-mkdir -p "$DEPS_DIR"/{binaries,packages,packer-plugins,pip-packages}
+mkdir -p "$DEPS_DIR"/{binaries,packages,packer-plugins,pip-packages,apk-packages}
 
 # AWS CLI (via pip for Alpine compatibility)
 echo "Downloading AWS CLI pip packages..."
@@ -17,9 +17,10 @@ if command -v pip3 &> /dev/null; then
     pip3 download awscli -d "$DEPS_DIR/pip-packages"
     echo "AWS CLI packages downloaded to $DEPS_DIR/pip-packages"
 else
-    echo "WARNING: pip3 not found. Creating empty pip-packages directory."
-    echo "AWS CLI will be installed from PyPI during Docker build (requires internet)."
-    touch "$DEPS_DIR/pip-packages/.placeholder"
+    echo "WARNING: pip3 not found. AWS CLI will be installed from PyPI during Docker build."
+    echo "This will require internet access during the build process."
+    echo "To fix: Install python3-pip and re-run this script."
+    touch "$DEPS_DIR/pip-packages/.gitkeep"
 fi
 
 # Packer Ansible Plugin
@@ -74,6 +75,11 @@ echo "  - packer-base-1.14.2.tar (base image)"
 echo "  - $DEPS_DIR/pip-packages/ (AWS CLI pip wheels)"
 echo "  - $DEPS_DIR/packer-plugins/ (Ansible provisioner plugin)"
 echo "  - $DEPS_DIR/packages/ (package list)"
+echo "  - $DEPS_DIR/apk-packages/ (empty - APK packages installed during build)"
+echo ""
+echo "Note: System packages (git, jq, etc.) are installed from Alpine repos during"
+echo "Docker build. They cannot be bundled without running on Alpine Linux, but"
+echo "they will be cached in the final Docker image for airgap use."
 echo ""
 echo "To transfer:"
 echo "  1. Create archive: tar -czf packer-airgap-bundle.tar.gz packer-base-1.14.2.tar dependencies/"

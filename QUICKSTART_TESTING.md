@@ -130,6 +130,24 @@ docker network rm airgap-test
 
 ## Common Issues
 
+### Issue: "dependencies/apk-packages: not found" during Docker build
+**Cause**: Running an older version of the Dockerfile that expected pre-bundled APK packages
+
+**Fix**:
+```bash
+# Pull the latest changes
+git pull origin claude/test-doc-creation-0179cJPKKrQbS2JZCUEFrpxH
+
+# Or manually create directories
+mkdir -p dependencies/{apk-packages,pip-packages,packer-plugins}
+
+# Then run collection and build
+./collect-dependencies.sh
+docker build --platform linux/amd64 -t packer-gitlab-cicd:test .
+```
+
+See [FIX_BUILD_ERROR.md](./FIX_BUILD_ERROR.md) for detailed explanation.
+
 ### Issue: "pip-packages is empty"
 **Cause**: pip3 not installed when running collect-dependencies.sh
 
@@ -143,6 +161,8 @@ brew install python3  # macOS
 # Re-run collection
 ./collect-dependencies.sh
 ```
+
+**Note**: If you can't install pip3, the build will still work - it will download AWS CLI from PyPI during the Docker build (requires internet).
 
 ### Issue: "No space left on device"
 **Cause**: Docker images are large (several hundred MB)

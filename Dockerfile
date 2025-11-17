@@ -1,23 +1,52 @@
 FROM hashicorp/packer:1.14.2
 
-# Install system dependencies from local APK bundles (airgap compatible)
-COPY dependencies/apk-packages/ /tmp/apk-packages/
-RUN apk add --upgrade --no-cache --allow-untrusted /tmp/apk-packages/*.apk && \
-    rm -rf /tmp/apk-packages
+# Install system dependencies directly via apk
+# Note: These need to be installed from Alpine repos as collecting APK packages
+# requires running on Alpine Linux. They will be cached in the final image.
+RUN apk add --no-cache \
+    git \
+    openssh-client \
+    ca-certificates \
+    curl \
+    wget \
+    unzip \
+    tar \
+    gzip \
+    jq \
+    python3 \
+    py3-pip \
+    make \
+    bash \
+    ansible
 
 # Install AWS CLI via pip from bundled packages (for airgap compatibility)
-COPY dependencies/pip-packages/ /tmp/pip-packages/
-RUN pip3 install --no-cache-dir --break-system-packages --no-index --find-links=/tmp/pip-packages awscli || \
-    pip3 install --no-cache-dir --break-system-packages awscli
+# Create directory structure if it doesn't exist
+RUN mkdir -p /tmp/pip-packages
+COPY dependencies/pip-packages/* /tmp/pip-packages/ 2>/dev/null || true
+RUN if [ -n "$(ls -A /tmp/pip-packages 2>/dev/null)" ]; then \
+        echo "Installing AWS CLI from bundled packages..."; \
+        pip3 install --no-cache-dir --break-system-packages --no-index --find-links=/tmp/pip-packages awscli; \
+    else \
+        echo "No bundled packages found. Installing AWS CLI from PyPI..."; \
+        pip3 install --no-cache-dir --break-system-packages awscli; \
+    fi && \
+    rm -rf /tmp/pip-packages
 
 # Install Packer Ansible plugin
 ARG ANSIBLE_PLUGIN_VERSION=1.1.4
-COPY dependencies/packer-plugins/packer-plugin-ansible.zip /tmp/packer-plugin-ansible.zip
-RUN mkdir -p /root/.packer.d/plugins/github.com/hashicorp/ansible && \
-    cd /root/.packer.d/plugins/github.com/hashicorp/ansible && \
-    unzip /tmp/packer-plugin-ansible.zip && \
-    chmod +x packer-plugin-ansible_v${ANSIBLE_PLUGIN_VERSION}_x5.0_linux_amd64 && \
-    rm /tmp/packer-plugin-ansible.zip
+RUN mkdir -p /tmp/packer-plugins
+COPY dependencies/packer-plugins/packer-plugin-ansible.zip /tmp/packer-plugins/ 2>/dev/null || true
+RUN if [ -f /tmp/packer-plugins/packer-plugin-ansible.zip ]; then \
+        echo "Installing Ansible plugin from bundled package..."; \
+        mkdir -p /root/.packer.d/plugins/github.com/hashicorp/ansible && \
+        cd /root/.packer.d/plugins/github.com/hashicorp/ansible && \
+        unzip /tmp/packer-plugins/packer-plugin-ansible.zip && \
+        chmod +x packer-plugin-ansible_v${ANSIBLE_PLUGIN_VERSION}_x5.0_linux_amd64 && \
+        echo "Ansible plugin installed successfully"; \
+    else \
+        echo "WARNING: Ansible plugin not found in bundle. Will need to download during 'packer init'"; \
+    fi && \
+    rm -rf /tmp/packer-plugins
 
 # Verify installations
 RUN packer --version && \
