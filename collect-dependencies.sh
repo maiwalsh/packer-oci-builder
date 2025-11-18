@@ -26,7 +26,12 @@ fi
 # Packer Ansible Plugin
 echo "Downloading Packer Ansible plugin..."
 ANSIBLE_PLUGIN_VERSION="1.1.4"
-curl -sL "https://releases.hashicorp.com/packer-plugin-ansible/${ANSIBLE_PLUGIN_VERSION}/packer-plugin-ansible_${ANSIBLE_PLUGIN_VERSION}_linux_amd64.zip" -o "$DEPS_DIR/packer-plugins/packer-plugin-ansible.zip"
+if curl -sL "https://releases.hashicorp.com/packer-plugin-ansible/${ANSIBLE_PLUGIN_VERSION}/packer-plugin-ansible_${ANSIBLE_PLUGIN_VERSION}_linux_amd64.zip" -o "$DEPS_DIR/packer-plugins/packer-plugin-ansible.zip"; then
+    echo "Packer Ansible plugin downloaded successfully"
+else
+    echo "WARNING: Failed to download Packer Ansible plugin. Will need to download during 'packer init'"
+    touch "$DEPS_DIR/packer-plugins/.gitkeep"
+fi
 
 # Download packages for offline installation
 echo "Downloading system packages..."
@@ -67,6 +72,9 @@ echo "Downloading Packer base image..."
 docker pull --platform linux/amd64 hashicorp/packer:1.14.2
 docker save hashicorp/packer:1.14.2 -o packer-base-1.14.2.tar
 echo "Saved packer-base-1.14.2.tar"
+
+# Ensure apk-packages has a placeholder (it's always empty but directory must exist)
+touch "$DEPS_DIR/apk-packages/.gitkeep"
 
 echo ""
 echo "=== Collection Complete ==="

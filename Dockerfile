@@ -20,9 +20,7 @@ RUN apk add --no-cache \
     ansible
 
 # Install AWS CLI via pip from bundled packages (for airgap compatibility)
-# Create directory structure if it doesn't exist
-RUN mkdir -p /tmp/pip-packages
-COPY dependencies/pip-packages/* /tmp/pip-packages/ 2>/dev/null || true
+COPY dependencies/pip-packages /tmp/pip-packages
 RUN if [ -n "$(ls -A /tmp/pip-packages 2>/dev/null)" ]; then \
         echo "Installing AWS CLI from bundled packages..."; \
         pip3 install --no-cache-dir --break-system-packages --no-index --find-links=/tmp/pip-packages awscli; \
@@ -34,8 +32,7 @@ RUN if [ -n "$(ls -A /tmp/pip-packages 2>/dev/null)" ]; then \
 
 # Install Packer Ansible plugin
 ARG ANSIBLE_PLUGIN_VERSION=1.1.4
-RUN mkdir -p /tmp/packer-plugins
-COPY dependencies/packer-plugins/packer-plugin-ansible.zip /tmp/packer-plugins/ 2>/dev/null || true
+COPY dependencies/packer-plugins /tmp/packer-plugins
 RUN if [ -f /tmp/packer-plugins/packer-plugin-ansible.zip ]; then \
         echo "Installing Ansible plugin from bundled package..."; \
         mkdir -p /root/.packer.d/plugins/github.com/hashicorp/ansible && \
