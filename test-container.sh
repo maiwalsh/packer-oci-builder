@@ -156,7 +156,7 @@ build {
 }
 EOF
 
-# Test packer init
+# Test packer init and validate together (must be in same container)
 echo -n "Test $((TOTAL + 1)): Packer init detects pre-installed plugin ... "
 TOTAL=$((TOTAL + 1))
 output=$(docker run --rm -v "$TEST_DIR:/workspace" ${IMAGE_NAME} sh -c "cd /workspace && packer init test.pkr.hcl" 2>&1)
@@ -169,10 +169,19 @@ else
     echo -e "${YELLOW}Plugin might not be detected correctly${NC}"
 fi
 
-# Test packer validate
-run_test_with_output "Packer validate works" \
-    "docker run --rm -v \"$TEST_DIR:/workspace\" ${IMAGE_NAME} sh -c \"cd /workspace && packer validate test.pkr.hcl\"" \
-    "valid"
+# Test packer validate (must run init first in same container session)
+echo -n "Test $((TOTAL + 1)): Packer validate works ... "
+TOTAL=$((TOTAL + 1))
+output=$(docker run --rm -v "$TEST_DIR:/workspace" ${IMAGE_NAME} sh -c "cd /workspace && packer init test.pkr.hcl >/dev/null 2>&1 && packer validate test.pkr.hcl" 2>&1)
+if echo "$output" | grep -q "valid"; then
+    echo -e "${GREEN}PASSED${NC}"
+    PASSED=$((PASSED + 1))
+else
+    echo -e "${RED}FAILED${NC}"
+    echo -e "${YELLOW}Expected pattern: valid${NC}"
+    echo -e "${YELLOW}Got: $output${NC}"
+    FAILED=$((FAILED + 1))
+fi
 
 echo ""
 echo -e "${BLUE}=== Phase 4: AWS CLI Functionality ===${NC}"
