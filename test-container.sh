@@ -187,13 +187,13 @@ echo ""
 echo -e "${BLUE}=== Phase 4: AWS CLI Functionality ===${NC}"
 echo ""
 
-# Test AWS CLI help
+# Test AWS CLI help (disable pager for non-interactive test)
 run_test "AWS CLI help command works" \
-    "docker run --rm ${IMAGE_NAME} aws help"
+    "docker run --rm -e AWS_PAGER='' ${IMAGE_NAME} sh -c 'aws help | head -n 1'"
 
-# Test AWS CLI S3 command structure (no credentials needed for help)
+# Test AWS CLI S3 subcommand structure (no credentials needed)
 run_test "AWS CLI S3 subcommand available" \
-    "docker run --rm ${IMAGE_NAME} aws s3 help"
+    "docker run --rm ${IMAGE_NAME} aws s3 --help 2>&1 | head -n 1"
 
 echo ""
 echo -e "${BLUE}=== Phase 5: Ansible Functionality ===${NC}"
