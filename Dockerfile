@@ -55,5 +55,8 @@ RUN packer --version && \
 # Set working directory
 WORKDIR /workspace
 
+# Override the entrypoint from base image to allow running other commands
+ENTRYPOINT []
+
 # Default command
 CMD ["packer"]
