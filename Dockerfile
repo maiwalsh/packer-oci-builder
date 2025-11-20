@@ -21,7 +21,7 @@ RUN apk add --no-cache \
 
 # Install AWS CLI via pip from bundled packages (for airgap compatibility)
 COPY dependencies/pip-packages /tmp/pip-packages
-RUN if [ -n "$(ls -A /tmp/pip-packages 2>/dev/null)" ]; then \
+RUN if [ -n "$(ls /tmp/pip-packages/*.whl 2>/dev/null)" ]; then \
         echo "Installing AWS CLI from bundled packages..."; \
         pip3 install --no-cache-dir --break-system-packages --no-index --find-links=/tmp/pip-packages awscli; \
     else \
