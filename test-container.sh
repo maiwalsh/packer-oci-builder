@@ -246,9 +246,9 @@ if [ "$AIRGAP_TEST" = "true" ]; then
     run_test "Packer works without internet" \
         "docker run --rm --network ${NETWORK_NAME} ${IMAGE_NAME} packer --version"
 
-    # Test packer validate without internet
+    # Test packer validate without internet (must run init first in same session)
     run_test "Packer validate works without internet" \
-        "docker run --rm --network ${NETWORK_NAME} -v \"$TEST_DIR:/workspace\" ${IMAGE_NAME} sh -c \"cd /workspace && packer validate test.pkr.hcl\""
+        "docker run --rm --network ${NETWORK_NAME} -v \"$TEST_DIR:/workspace\" ${IMAGE_NAME} sh -c \"cd /workspace && packer init test.pkr.hcl >/dev/null 2>&1 && packer validate test.pkr.hcl\""
 
     # Cleanup network
     echo -e "${YELLOW}Cleaning up isolated network${NC}"
