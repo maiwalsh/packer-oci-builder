@@ -246,9 +246,35 @@ if [ "$AIRGAP_TEST" = "true" ]; then
     run_test "Packer works without internet" \
         "docker run --rm --network ${NETWORK_NAME} ${IMAGE_NAME} packer --version"
 
-    # Test packer validate without internet (must run init first in same session)
-    run_test "Packer validate works without internet" \
-        "docker run --rm --network ${NETWORK_NAME} -v \"$TEST_DIR:/workspace\" ${IMAGE_NAME} sh -c \"cd /workspace && packer init test.pkr.hcl >/dev/null 2>&1 && packer validate test.pkr.hcl\""
+    # Test packer validate without internet using a simple template (no plugins required)
+    # Note: Templates with required_plugins need packer init which requires internet
+    # In real airgap workflow, users run packer init on internet side before transfer
+    echo -n "Test $((TOTAL + 1)): Packer validate works without internet ... "
+    TOTAL=$((TOTAL + 1))
+
+    # Create a simple template without plugin requirements
+    AIRGAP_TEST_DIR=$(mktemp -d)
+    cat > "$AIRGAP_TEST_DIR/simple.pkr.hcl" << 'EOF'
+source "null" "basic" {
+  communicator = "none"
+}
+
+build {
+  sources = ["source.null.basic"]
+}
+EOF
+
+    output=$(docker run --rm --network ${NETWORK_NAME} -v "$AIRGAP_TEST_DIR:/workspace" ${IMAGE_NAME} sh -c "cd /workspace && packer validate simple.pkr.hcl" 2>&1)
+    if echo "$output" | grep -q "valid"; then
+        echo -e "${GREEN}PASSED${NC}"
+        PASSED=$((PASSED + 1))
+    else
+        echo -e "${RED}FAILED${NC}"
+        echo -e "${YELLOW}Output: $output${NC}"
+        FAILED=$((FAILED + 1))
+    fi
+
+    rm -rf "$AIRGAP_TEST_DIR"
 
     # Cleanup network
     echo -e "${YELLOW}Cleaning up isolated network${NC}"
